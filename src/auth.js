@@ -18,8 +18,12 @@ export function createAuth(config, database) {
     databaseHooks: { user: { create: { before: async (user) => {
       if (!['student', 'tutor'].includes(user.role ?? 'student')) throw new APIError('BAD_REQUEST', { message: 'Choose Student or Tutor.' });
       return { data: { ...user, role: user.role ?? 'student', plan: 'free', email: user.email.toLowerCase() } };
+    } }, update: { before: async (user) => {
+      // The role field is accepted at signup, never through public update-user.
+      if ('role' in user || 'plan' in user) throw new APIError('FORBIDDEN', { message: 'Role and plan changes require a protected platform action.' });
+      return { data: user };
     } } } },
     session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24, cookieCache: { enabled: false } },
-    rateLimit: { enabled: true, window: 60, max: 40 },
+    rateLimit: { enabled: config.NODE_ENV !== 'test', window: 60, max: 40 },
   });
 }
