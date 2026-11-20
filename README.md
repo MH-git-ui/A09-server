@@ -42,3 +42,9 @@ Dependencies: Express, cors, Helmet, MongoDB driver, BetterAuth, jsonwebtoken, Z
 Cloud MongoDB contains five seeded demo users, twelve tuitions and three applications. Hosted checks through the frontend proxy passed for public listings and admin/tutor/student signin, secure cookies, JWT sessions, dashboards, role restrictions and logout. Run `node --env-file=.env scripts/verify-live.js https://mentorlagbe-mh.vercel.app` to repeat those checks using the private SEED_PASSWORD. This does not verify Stripe or ImgBB.
 
 Do not submit until live integrations and deployment are verified. The client docs/release-checklist.md tracks remaining acceptance criteria.
+
+## Integration verification — November 21, 2026
+
+Stripe test credentials, signed webhooks and ImgBB are configured in Vercel. Authenticated ImgBB upload and hosted image retrieval passed. A $10 USD sandbox checkout completed, the success page confirmed payment, and the demo student dashboard showed Pro after reload. Automatic and manually resent Stripe webhooks both returned HTTP 200; repeated verification and delivery retained exactly one MongoDB payment record. No real money was charged. Adaptive Pricing is disabled to preserve the fixed USD plan prices. All 23 backend tests passed.
+
+Browser checks for checkout cancellation, the $15 tutor checkout, both upload forms and the remaining role dashboards are still pending. The existing collection-count clarification and project contact requirements remain open.

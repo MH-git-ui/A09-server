@@ -93,6 +93,8 @@ export function paymentService({ config, db, guards, stripe: injectedStripe }) {
     const role = req.user.role;
     const session = await requireStripe().checkout.sessions.create({
       mode: "payment",
+      // Fulfillment validates the assignment's fixed USD plan amounts.
+      adaptive_pricing: { enabled: false },
       client_reference_id: String(req.user._id),
       customer_email: req.user.email,
       metadata: { userId: String(req.user._id), role },
