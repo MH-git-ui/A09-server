@@ -72,7 +72,7 @@ export function createApp({
     if (error.code === "LIMIT_FILE_SIZE")
       return res
         .status(413)
-        .json({ error: { message: "Images must be smaller than 5 MB." } });
+        .json({ error: { message: "Images must be smaller than 4 MB." } });
     if (error.type === "entity.parse.failed") {
       return res
         .status(400)

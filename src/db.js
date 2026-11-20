@@ -7,6 +7,8 @@ export function objectId(value) {
 export async function connectDatabase(config) {
   const client = new MongoClient(config.MONGODB_URI, {
     serverSelectionTimeoutMS: 10000,
+    maxPoolSize: 10,
+    maxIdleTimeMS: 60000,
   });
   await client.connect();
   const db = client.db(config.MONGODB_DB);

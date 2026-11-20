@@ -24,7 +24,8 @@ export function profileRoutes({ db, guards, config }) {
   });
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    // Keep multipart requests below Vercel's 4.5 MB function payload limit.
+    limits: { fileSize: 4 * 1024 * 1024, files: 1 },
     fileFilter: (_req, file, cb) =>
       cb(
         null,
@@ -32,7 +33,7 @@ export function profileRoutes({ db, guards, config }) {
       ),
   });
   router.post("/images", upload.single("image"), async (req, res) => {
-    if (!req.file) fail(400, "Choose a JPG, PNG, or WebP image under 5 MB.");
+    if (!req.file) fail(400, "Choose a JPG, PNG, or WebP image under 4 MB.");
     if (!config.IMGBB_API_KEY)
       fail(503, "Image uploads are not configured yet.");
     const b = req.file.buffer;

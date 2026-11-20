@@ -24,7 +24,11 @@ The business database contains users, tuitions, applications and payments. The o
 
 ## Verification
 
-Run `pnpm test`. Eighteen tests cover HTTP errors, role escalation, JWT/logout, ownership, concurrent free limits, moderation, applications and idempotent payment fulfillment. Payment tests use fixtures, not a live Stripe transaction. Actual Stripe checkout/webhooks and ImgBB uploads still require service credentials and end-to-end verification.
+Run `pnpm test`. Twenty-two tests cover HTTP errors, role escalation, JWT/logout, ownership, concurrent free limits, moderation, applications, idempotent payment fulfillment, production configuration and serverless initialization. Payment tests use fixtures, not a live Stripe transaction. Actual Stripe checkout/webhooks and ImgBB uploads still require service credentials and end-to-end verification.
+
+## Vercel
+
+Import this repository as an Express project using Node.js 24. The root app.js exports the application without opening a port; warm requests reuse the MongoDB connection pool, and failed initialization can retry. Set the production environment before deployment. The client repository's docs/vercel-deployment.md contains the complete two-project setup and verification steps. Image uploads are limited to 4 MB to fit Vercel's payload limit.
 
 Dependencies: Express, cors, Helmet, MongoDB driver, BetterAuth, jsonwebtoken, Zod, Stripe, Multer, express-rate-limit. mongodb-memory-server is a development/test dependency; tests use Node's built-in runner.
 

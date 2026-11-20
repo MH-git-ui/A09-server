@@ -23,5 +23,17 @@ export function readConfig(env = process.env) {
     throw new Error(
       `Invalid environment fields: ${result.error.issues.map((i) => i.path.join(".")).join(", ")}`,
     );
+  for (const key of ["CLIENT_URL", "BETTER_AUTH_URL"]) {
+    const url = new URL(result.data[key]);
+    if (!["http:", "https:"].includes(url.protocol) || url.origin !== result.data[key])
+      throw new Error(`${key} must be an HTTP(S) origin without a path or trailing slash.`);
+    if (result.data.NODE_ENV === "production" && (!env[key] || url.protocol !== "https:"))
+      throw new Error(`${key} must be explicitly configured with HTTPS in production.`);
+  }
+  if (result.data.NODE_ENV === "production") {
+    if (result.data.BETTER_AUTH_SECRET === result.data.JWT_SECRET ||
+        [result.data.BETTER_AUTH_SECRET, result.data.JWT_SECRET].some((value) => value.startsWith("replace-with-")))
+      throw new Error("Production requires distinct generated authentication secrets.");
+  }
   return result.data;
 }
