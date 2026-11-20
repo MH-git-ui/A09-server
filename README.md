@@ -24,7 +24,7 @@ The business database contains users, tuitions, applications and payments. The o
 
 ## Verification
 
-Run `pnpm test`. Twenty-two tests cover HTTP errors, role escalation, JWT/logout, ownership, concurrent free limits, moderation, applications, idempotent payment fulfillment, production configuration and serverless initialization. Payment tests use fixtures, not a live Stripe transaction. Actual Stripe checkout/webhooks and ImgBB uploads still require service credentials and end-to-end verification.
+Run `pnpm test`. Twenty-three tests cover HTTP errors, role escalation, JWT/logout, ownership, concurrent free limits, moderation, applications, idempotent payment fulfillment, production configuration, serverless initialization and connected seed data. Seed verification signs in all five demo accounts, checks twelve listings and three applications, and confirms rerunning preserves edits and passwords. Payment tests use fixtures, not a live Stripe transaction. Actual Stripe checkout/webhooks and ImgBB uploads still require service credentials and end-to-end verification.
 
 ## Vercel
 

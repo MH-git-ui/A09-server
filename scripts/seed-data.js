@@ -131,6 +131,7 @@ export async function seedDatabase({ db, auth, password }) {
   const examples = await db
     .collection("tuitions")
     .find({ seedKey: { $in: ["demo-0", "demo-1", "demo-2"] } })
+    .sort({ seedKey: 1 })
     .toArray();
   for (const [index, tuition] of examples.entries())
     await db
