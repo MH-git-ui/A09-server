@@ -36,6 +36,9 @@ Dependencies: Express, cors, Helmet, MongoDB driver, BetterAuth, jsonwebtoken, Z
 
 - Server: https://github.com/MH-git-ui/A09-server
 - Client: https://github.com/MH-git-ui/A09
-- Live API: not deployed yet.
+- Live API: https://mentorlagbe-api-mh.vercel.app
+- Live frontend: https://mentorlagbe-mh.vercel.app
+
+Cloud MongoDB contains five seeded demo users, twelve tuitions and three applications. Hosted checks through the frontend proxy passed for public listings and admin/tutor/student signin, secure cookies, JWT sessions, dashboards, role restrictions and logout. Run `node --env-file=.env scripts/verify-live.js https://mentorlagbe-mh.vercel.app` to repeat those checks using the private SEED_PASSWORD. This does not verify Stripe or ImgBB.
 
 Do not submit until live integrations and deployment are verified. The client docs/release-checklist.md tracks remaining acceptance criteria.
