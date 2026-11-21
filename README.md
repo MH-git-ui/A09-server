@@ -18,33 +18,50 @@ Set MONGODB_URI, MONGODB_DB, BETTER_AUTH_SECRET, JWT_SECRET, CLIENT_URL, BETTER_
 
 Point Stripe events checkout.session.completed and checkout.session.async_payment_succeeded to /api/payments/webhook. Pro currently uses one-time USD payments ($15 tutor, $10 student); monthly tuition fees are separate BDT amounts. Missing Stripe/ImgBB keys return explicit unavailable responses and do not simulate success.
 
-## Database architecture caveat
+## Database architecture
 
-The business database contains users, tuitions, applications and payments. The official BetterAuth MongoDB adapter persists accounts, sessions and verification records in a companion auth database while routing users to the business database. This needs instructor confirmation if the four-collection constraint applies globally, rather than to the business schema.
+The live application uses exactly four physical MongoDB collections: users, tuitions, applications and payments. The official BetterAuth MongoDB adapter stores its account/session/verification logical models as tagged records inside users. Mandatory model filters keep those records out of application user queries and counts; authentication joins are disabled. An automated test verifies isolation and the physical collection count. The previous companion database is retained only as an offline migration backup; the application no longer reads or writes it.
+
+For installations using the old companion database, scripts/migrate-auth-storage.js copies authentication records without deleting the source. Run with the existing server environment before deploying this storage implementation. Fresh databases need no migration.
 
 ## Verification
 
-Run `pnpm test`. Twenty-three tests cover HTTP errors, role escalation, JWT/logout, ownership, concurrent free limits, moderation, applications, idempotent payment fulfillment, production configuration, serverless initialization and connected seed data. Seed verification signs in all five demo accounts, checks twelve listings and three applications, and confirms rerunning preserves edits and passwords. Payment tests use fixtures, not a live Stripe transaction. Actual Stripe checkout/webhooks and ImgBB uploads still require service credentials and end-to-end verification.
+Run pnpm test. The 24 tests cover role escalation, JWT/logout, ownership, concurrent free limits, moderation, applications, payment idempotency, auth-record isolation, four physical collections, serverless initialization and connected seeding.
 
-## Vercel
+Verification completed November 21, 2026:
 
-Import this repository as an Express project using Node.js 24. The root app.js exports the application without opening a port; warm requests reuse the MongoDB connection pool, and failed initialization can retry. Set the production environment before deployment. The client repository's docs/vercel-deployment.md contains the complete two-project setup and verification steps. Image uploads are limited to 4 MB to fit Vercel's payload limit.
+- All 24 backend tests passed; the client production build passed all 22 routes and TypeScript checks.
+- Hosted admin, tutor and student signin, session persistence, JWT authorization, dashboards, role restrictions and logout revocation passed.
+- Browser checks covered public search, dashboard reloads, mobile navigation at 375px and tablet layout at 768px, with no document-level horizontal overflow in the checked views.
+- Both profile and tuition banner upload controls returned real ImgBB previews. Authenticated upload and hosted image retrieval passed.
+- Stripe sandbox payments succeeded for student $10 USD and tutor $15 USD. Success pages confirmed Pro upgrades; repeated verification passed for both. Student webhook delivery and manual resend returned HTTP 200 without duplicate payment records.
+- Tutor checkout cancellation returned to the cancel page and left the free plan unchanged before the subsequent successful test.
+- Twelve approved tuitions and connected demonstration users/applications are seeded in MongoDB Atlas.
+- Footer email, phone and Facebook use the supplied public contact details. The X logo links to sharing the site on X.
 
-Dependencies: Express, cors, Helmet, MongoDB driver, BetterAuth, jsonwebtoken, Zod, Stripe, Multer, express-rate-limit. mongodb-memory-server is a development/test dependency; tests use Node's built-in runner.
+Stripe remains in test mode; no real money was charged. Pro is a one-time upgrade because the assignment specifies prices but no recurring interval. Tuition fees are separate monthly BDT amounts. Optional features selected: server-side pagination and realistic connected seeding.
 
-## Links and release status
+Repeat hosted role checks with: node --env-file=.env scripts/verify-live.js https://mentorlagbe-mh.vercel.app
 
-- Server: https://github.com/MH-git-ui/A09-server
-- Client: https://github.com/MH-git-ui/A09
+scripts/verify-integrations.js verifies authenticated ImgBB uploads and creates a checkout, or checks an existing session twice when given its session ID. Set INTEGRATION_EMAIL for the desired demo role; SEED_PASSWORD is required. Payment completion occurs in Stripe's sandbox browser form.
+
+## Vercel and dependencies
+
+Both projects deploy with Node.js 26. Root app.js exports Express without opening a port. Warm requests reuse MongoDB connections; failed initialization can retry. Uploads are capped at 4 MB. See the client docs/vercel-deployment.md for configuration.
+
+Dependencies: Express, cors, Helmet, MongoDB driver, BetterAuth, jsonwebtoken, Zod, Stripe, Multer and express-rate-limit. mongodb-memory-server is used for development/tests with Node's built-in test runner.
+
+## Submission links and demo accounts
+
+- Live website: https://mentorlagbe-mh.vercel.app
+- Client repository: https://github.com/MH-git-ui/A09
+- Server repository: https://github.com/MH-git-ui/A09-server
 - Live API: https://mentorlagbe-api-mh.vercel.app
-- Live frontend: https://mentorlagbe-mh.vercel.app
 
-Cloud MongoDB contains five seeded demo users, twelve tuitions and three applications. Hosted checks through the frontend proxy passed for public listings and admin/tutor/student signin, secure cookies, JWT sessions, dashboards, role restrictions and logout. Run `node --env-file=.env scripts/verify-live.js https://mentorlagbe-mh.vercel.app` to repeat those checks using the private SEED_PASSWORD. This does not verify Stripe or ImgBB.
+These are dedicated assignment demonstration accounts, not infrastructure credentials.
 
-Do not submit until live integrations and deployment are verified. The client docs/release-checklist.md tracks remaining acceptance criteria.
-
-## Integration verification — November 21, 2026
-
-Stripe test credentials, signed webhooks and ImgBB are configured in Vercel. Authenticated ImgBB upload and hosted image retrieval passed. A $10 USD sandbox checkout completed, the success page confirmed payment, and the demo student dashboard showed Pro after reload. Automatic and manually resent Stripe webhooks both returned HTTP 200; repeated verification and delivery retained exactly one MongoDB payment record. No real money was charged. Adaptive Pricing is disabled to preserve the fixed USD plan prices. All 23 backend tests passed.
-
-Browser checks for checkout cancellation, the $15 tutor checkout, both upload forms and the remaining role dashboards are still pending. The existing collection-count clarification and project contact requirements remain open.
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | admin@mentorlagbe.demo | 3UG2aX8GbPtzeDYmMhAT_I0Aa5U |
+| Tutor | tutor@mentorlagbe.demo | 3UG2aX8GbPtzeDYmMhAT_I0Aa5U |
+| Student | student@mentorlagbe.demo | 3UG2aX8GbPtzeDYmMhAT_I0Aa5U |

@@ -21,16 +21,18 @@ async function request(path, { method = "GET", body } = {}) {
   return { response, data };
 }
 const login = await request("/auth/sign-in/email", { method: "POST", body: {
-  email: "student@mentorlagbe.demo", password: process.env.SEED_PASSWORD,
+  email: process.env.INTEGRATION_EMAIL ?? "student@mentorlagbe.demo", password: process.env.SEED_PASSWORD,
 } });
 cookie = login.response.headers.getSetCookie().map(value => value.split(";")[0]).join("; ");
-token = (await request("/token")).data.token;
+const identity = (await request("/token")).data;
+token = identity.token;
+const expectedAmount = identity.user.role === "tutor" ? 15 : 10;
 try {
   if (process.argv[3]) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const payment = await request("/payments/verify", { method: "POST", body: { sessionId: process.argv[3] } });
       assert.equal(payment.data.paymentStatus, "paid");
-      assert.equal(payment.data.amount, 10);
+      assert.equal(payment.data.amount, expectedAmount);
     }
     assert.equal((await request("/account/me")).data.plan, "pro");
     console.log("Paid checkout verification, repeated verification and Pro plan: passed");

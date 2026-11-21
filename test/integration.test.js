@@ -129,6 +129,20 @@ test("business database contains exactly the four specified collections", async 
 });
 
 let tuition;
+test("authentication records stay in four physical collections and never leak into user lists", async () => {
+  const raw = database.client.db(config.MONGODB_DB);
+  assert.ok(await raw.collection("users").countDocuments({ __authModel: "account" }) >= 4);
+  assert.ok(await raw.collection("users").countDocuments({ __authModel: "session" }) >= 4);
+  assert.equal(await database.db.collection("users").countDocuments(), 4);
+  const list = await call("/admin/users", { actor: "admin" });
+  assert.equal(list.status, 200);
+  assert.equal(list.data.length, 4);
+  assert.ok(list.data.every(user => user.email && !user.password && !user.token && !user.__authModel));
+  const authId = (await raw.collection("users").findOne({ __authModel: "account" }))._id;
+  assert.equal(await database.db.collection("users").findOne({ _id: authId }), null);
+  assert.equal((await raw.listCollections().toArray()).length, 4);
+  assert.equal((await database.client.db(`${config.MONGODB_DB}_auth`).listCollections().toArray()).length, 0);
+});
 const listing = {
   title: "A thoughtful mathematics class",
   subject: "Mathematics",

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export function createAuth(config, database) {
   return betterAuth({
+    experimental: { joins: false },
     database: mongodbAdapter(database.authDatabase, {
       client: database.client,
       transaction: false,
