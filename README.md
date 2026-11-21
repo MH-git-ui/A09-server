@@ -89,7 +89,7 @@ Stripe test-mode Pro upgrades cost **$15 USD for tutors** and **$10 USD for stud
 
 ## Testing and deployment
 
-The 24 backend tests cover role restrictions, ownership, free-plan limits, moderation, applications, payment idempotency, authentication-record isolation, database collections, initialization and seeding. Both student and tutor sandbox payments and authenticated ImgBB uploads have also been verified on the deployed application.
+The 29 backend tests cover role restrictions, ownership, free-plan limits, moderation, applications, payment idempotency, authentication-record isolation, database collections, initialization and seeding. Both student and tutor sandbox payments and authenticated ImgBB uploads have also been verified on the deployed application.
 
 `scripts/verify-live.js` checks hosted authentication and role access. `scripts/verify-integrations.js` checks uploads and checkout verification. Both use the configured demo credentials. `scripts/migrate-auth-storage.js` is retained for older installations using a companion authentication database; fresh installations do not need it.
 

@@ -340,6 +340,63 @@ test("paid session fulfillment is idempotent and rejects price tampering", async
     /not completed/,
   );
 });
+test("approved listings respect mode, class and subject filters and pagination", async () => {
+  const rows = await database.db.collection("tuitions").find().toArray();
+  for (const item of rows) await call(`/admin/tuitions/${item._id}`, {
+    actor: "admin", method: "PATCH", body: { approvalStatus: "approved" },
+  });
+  const first = await call("/tuitions?subject=Mathematics&classLevel=HSC&mode=Online&limit=1&page=1");
+  const second = await call("/tuitions?subject=Mathematics&classLevel=HSC&mode=Online&limit=1&page=2");
+  assert.equal(first.data.total, 2);
+  assert.equal(first.data.pages, 2);
+  assert.notEqual(first.data.items[0]._id, second.data.items[0]._id);
+  assert.equal((await call("/tuitions?mode=Offline")).data.total, 0);
+  assert.equal((await call("/tuitions?classLevel=University")).data.total, 0);
+  assert.equal((await call("/tuitions?subject=English")).data.total, 0);
+});
+
+test("Pro students receive priority and can cancel only their pending application", async () => {
+  const other = (await database.db.collection("tuitions").find().toArray()).find(x => String(x._id) !== tuition._id);
+  const result = await call(`/applications/${other._id}`, { actor: "student", method: "POST", body: {
+    studentPhone: "+8801000000000", preferredSchedule: "Weekday evenings", studentNote: "Practice algebra",
+  } });
+  assert.equal(result.status, 201);
+  assert.equal(result.data.priority, true);
+  assert.equal(result.data.status, "pending");
+  assert.equal((await call(`/applications/${result.data._id}`, { actor: "tutor", method: "DELETE" })).status, 403);
+  assert.equal((await call(`/applications/${result.data._id}`, { actor: "student", method: "DELETE" })).status, 200);
+  assert.equal((await call(`/applications/${result.data._id}`, { actor: "student", method: "DELETE" })).status, 409);
+});
+
+test("closing and deleting owned tuition removes it from public browse", async () => {
+  assert.equal((await call(`/tutor/tuitions/${tuition._id}/active`, { actor: "tutor", method: "PATCH", body: { isActive: false } })).status, 200);
+  assert.equal((await call(`/tuitions/${tuition._id}`)).status, 404);
+  assert.equal((await call(`/tutor/tuitions/${tuition._id}/active`, { actor: "tutor", method: "PATCH", body: { isActive: true } })).status, 200);
+  assert.equal((await call(`/tuitions/${tuition._id}`)).status, 200);
+  assert.equal((await call(`/tutor/tuitions/${tuition._id}`, { actor: "other", method: "DELETE" })).status, 404);
+  assert.equal((await call(`/tutor/tuitions/${tuition._id}`, { actor: "tutor", method: "DELETE" })).status, 200);
+  assert.equal((await call(`/tuitions/${tuition._id}`)).status, 404);
+});
+
+test("Pro tutor can exceed two posts and admin rejection keeps a post private", async () => {
+  await database.db.collection("users").updateOne({ email: "tutor@integration.test" }, { $set: { plan: "pro" } });
+  for (let i = 0; i < 3; i++) assert.equal((await call("/tutor/tuitions", { actor: "tutor", method: "POST", body: listing })).status, 201);
+  const all = await call("/tutor/tuitions", { actor: "tutor" });
+  assert.ok(all.data.length > 2);
+  const id = all.data[0]._id;
+  assert.equal((await call(`/admin/tuitions/${id}`, { actor: "admin", method: "PATCH", body: { approvalStatus: "rejected" } })).status, 200);
+  assert.equal((await call(`/tuitions/${id}`)).status, 404);
+});
+
+test("admin role updates immediately change permissions and own role stays protected", async () => {
+  const id = accounts.other.user.id;
+  assert.equal((await call(`/admin/users/${id}`, { actor: "student", method: "PATCH", body: { role: "admin" } })).status, 403);
+  assert.equal((await call(`/admin/users/${id}`, { actor: "admin", method: "PATCH", body: { role: "student" } })).status, 200);
+  assert.equal((await call("/tutor/tuitions", { actor: "other" })).status, 403);
+  assert.equal((await call("/applications", { actor: "other" })).status, 200);
+  assert.equal((await call(`/admin/users/${accounts.admin.user.id}`, { actor: "admin", method: "PATCH", body: { role: "student" } })).status, 409);
+});
+
 test("logout invalidates the previously issued JWT", async () => {
   assert.equal(
     (
