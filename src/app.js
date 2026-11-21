@@ -56,6 +56,16 @@ export function createApp({
   app.use(express.json({ limit: "100kb" }));
 
   // This is process liveness, not database or third-party service readiness.
+  app.get("/", (_req, res) => {
+    res.json({
+      status: "ok",
+      service: "mentorlagbe-api",
+      message: "Welcome to the MentorLagbe API.",
+      website: clientUrl,
+      health: "/api/health",
+    });
+  });
+
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", service: "mentorlagbe-api" });
   });
