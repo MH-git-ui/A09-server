@@ -63,6 +63,11 @@ export function createApp({
       message: "Welcome to the MentorLagbe API.",
       website: clientUrl,
       health: "/api/health",
+      publicData: {
+        tuitions: "/api/tuitions",
+        subjectsAndClasses: "/api/catalog",
+        statistics: "/api/stats",
+      },
     });
   });
 
